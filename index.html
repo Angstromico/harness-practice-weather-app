@@ -1,9 +1,572 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Weather App</title>
-  </head>
-  <body></body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aether | Next-Gen Atmospheric Weather & Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="theme-sunny">
+
+  <!-- Background Canvas Particle System (Rain, Snow, Clouds, Rays, Stars) -->
+  <canvas id="weather-canvas"></canvas>
+
+  <!-- Ambient Light Orbs -->
+  <div class="atmosphere-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <!-- Application Main Shell -->
+  <div class="app-wrapper">
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+      <div class="brand-container">
+        <div class="brand-icon-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">Aether</span>
+          <span class="brand-badge">Atmosphere 2.0</span>
+        </div>
+      </div>
+
+      <!-- Search & Auto-Suggest Bar -->
+      <div class="search-container">
+        <div class="search-input-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="search-input" class="search-input" placeholder="Search global cities or enter custom location..." autocomplete="off">
+          <button id="search-clear" class="search-clear-btn" aria-label="Clear Search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div id="search-results" class="search-results-dropdown"></div>
+      </div>
+
+      <!-- Unit Switcher & Telemetry Sync -->
+      <div class="nav-actions">
+        <div class="unit-toggle" role="group" aria-label="Temperature Units">
+          <button id="btn-unit-c" class="unit-btn active">°C</button>
+          <button id="btn-unit-f" class="unit-btn">°F</button>
+        </div>
+        <button id="btn-re-simulate" class="btn-icon" title="Synthesize Fresh Atmospheric Data" aria-label="Re-simulate weather">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Quick City Strip -->
+    <nav class="quick-cities-strip" aria-label="Preset Popular Locations">
+      <button class="city-chip active" data-city="Tokyo">Tokyo</button>
+      <button class="city-chip" data-city="New York">New York</button>
+      <button class="city-chip" data-city="London">London</button>
+      <button class="city-chip" data-city="Paris">Paris</button>
+      <button class="city-chip" data-city="Reykjavik">Reykjavik</button>
+      <button class="city-chip" data-city="Sydney">Sydney</button>
+      <button class="city-chip" data-city="Singapore">Singapore</button>
+      <button class="city-chip" data-city="Cairo">Cairo</button>
+      <button class="city-chip" data-city="Dubai">Dubai</button>
+      <button class="city-chip" data-city="Zurich">Zurich</button>
+      <button class="city-chip" data-city="San Francisco">San Francisco</button>
+      <button class="city-chip" data-city="Rio de Janeiro">Rio de Janeiro</button>
+    </nav>
+
+    <!-- Simulated Backend Telemetry Banner -->
+    <div class="telemetry-banner">
+      <div class="telemetry-left">
+        <div class="pulse-dot"></div>
+        <span><strong>Live Synthetic Telemetry:</strong> Diurnal atmospheric equations active.</span>
+      </div>
+      <div class="telemetry-right">
+        <span id="telemetry-seed-badge">SEED: 35.7°N, 139.7°E | STOCHASTIC: OK (12ms)</span>
+      </div>
+    </div>
+
+    <!-- MAIN WEATHER HERO STAGE -->
+    <main>
+      <section class="weather-hero-grid">
+        <!-- Hero Primary Card -->
+        <article class="glass-card hero-primary-card">
+          <div class="hero-primary-top">
+            <div class="location-meta">
+              <div id="location-country" class="location-country-badge">Japan</div>
+              <h1 id="location-name">Tokyo</h1>
+              <div class="location-time">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span id="local-time">--:-- local</span>
+                <span>•</span>
+                <span id="coordinates">35.7°N, 139.7°E</span>
+              </div>
+            </div>
+            <div id="climate-zone" class="climate-zone-badge">Humid Subtropical</div>
+          </div>
+
+          <!-- Large Temperature & Weather Icon -->
+          <div class="hero-primary-middle">
+            <div class="temp-large-display">
+              <span id="hero-temp" class="temp-number">18</span>
+              <span id="hero-temp-unit" class="temp-unit">°C</span>
+            </div>
+            <div id="weather-icon-showcase" class="hero-icon-showcase">
+              <!-- Dynamically populated SVG art -->
+            </div>
+          </div>
+
+          <!-- Condition & High / Low details -->
+          <div class="hero-primary-bottom">
+            <div class="condition-title-row">
+              <span id="condition-label" class="condition-text">Sunny & Clear</span>
+              <span class="feels-like-text">Feels like <strong id="feels-like-val">18°C</strong></span>
+            </div>
+
+            <div class="condition-summary-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <span id="condition-summary">High barometric pressure keeping skies crisp and radiant.</span>
+            </div>
+
+            <div class="high-low-strip">
+              <span class="hi-temp">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;">
+                  <line x1="12" y1="19" x2="12" y2="5"/>
+                  <polyline points="5 12 12 5 19 12"/>
+                </svg>
+                High <strong id="hi-temp-val">22°</strong>
+              </span>
+              <span class="low-temp">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <polyline points="19 12 12 19 5 12"/>
+                </svg>
+                Low <strong id="low-temp-val">12°</strong>
+              </span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hero Secondary: Interactive Simulated Doppler Radar -->
+        <article class="glass-card hero-radar-card">
+          <div class="radar-header">
+            <div class="radar-title-group">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--theme-accent);">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+              <strong>Doppler Radar Echo</strong>
+            </div>
+            <div class="radar-live-badge">
+              <span class="blink-dot"></span>
+              LIVE SYNTHESIS
+            </div>
+          </div>
+
+          <div class="radar-canvas-container">
+            <canvas id="radar-canvas"></canvas>
+            <div class="radar-crosshair"></div>
+            <div class="radar-legend">
+              <span>dBZ</span>
+              <div class="radar-scale-bar"></div>
+              <span>75</span>
+            </div>
+          </div>
+
+          <div class="radar-controls-footer">
+            <div class="radar-layer-toggles">
+              <button class="layer-btn active" data-layer="precip">Precipitation</button>
+              <button class="layer-btn" data-layer="wind">Wind Streamlines</button>
+              <button class="layer-btn" data-layer="temp">Thermal Field</button>
+            </div>
+            <span style="font-size:0.75rem;color:var(--theme-text-muted);font-family:var(--font-mono);">Range: 100 km</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- HOURLY 24-HOUR FORECAST SCROLLER -->
+      <section class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Hourly Simulation (Next 24h)
+          </h2>
+          <span style="font-size:0.82rem;color:var(--theme-text-muted);">Click any hour to scrub simulation</span>
+        </div>
+
+        <div class="hourly-scroll-container">
+          <div id="hourly-track" class="hourly-track">
+            <!-- Dynamically populated cards -->
+          </div>
+        </div>
+      </section>
+
+      <!-- BENTO GRID: ATMOSPHERIC METRICS -->
+      <section class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Micro-Atmospheric Diagnostics
+          </h2>
+        </div>
+
+        <div class="bento-grid">
+          <!-- 1. Wind & Compass -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+                </svg>
+                <span>Wind Telemetry</span>
+              </div>
+              <span id="wind-dir-val">NW</span>
+            </div>
+            <div class="bento-body wind-compass-wrapper">
+              <div class="compass-dial">
+                <div id="compass-needle" class="compass-needle"></div>
+                <div class="compass-center-dot"></div>
+              </div>
+              <div>
+                <div class="bento-val-huge"><span id="wind-speed-val">14</span><span>km/h</span></div>
+                <div id="wind-gust-val" class="bento-footer">Gusts up to 24 km/h</div>
+              </div>
+            </div>
+            <div class="bento-footer">Aerodynamic laminar flow model.</div>
+          </div>
+
+          <!-- 2. Celestial Sun Cycle -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/>
+                  <line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <span>Solar Trajectory</span>
+              </div>
+            </div>
+            <div class="bento-body">
+              <div class="sun-arc-container">
+                <svg class="sun-arc-svg" viewBox="0 0 200 60">
+                  <path d="M 10 50 Q 100 5 190 50" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4,4"/>
+                  <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+                  <circle id="sun-orbit-dot" cx="100" cy="25" r="5" fill="#fbbf24"/>
+                </svg>
+              </div>
+              <div class="sun-times-row">
+                <span>Sunrise: <strong id="sunrise-time">--:--</strong></span>
+                <span>Sunset: <strong id="sunset-time">--:--</strong></span>
+              </div>
+            </div>
+            <div class="bento-footer">Astronomical solar ephemeris calculation.</div>
+          </div>
+
+          <!-- 3. Air Quality Index -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 15h18M3 9h18"/>
+                </svg>
+                <span>Air Quality (AQI)</span>
+              </div>
+              <span id="aqi-pill" class="aqi-pill good">Good</span>
+            </div>
+            <div class="bento-body">
+              <div class="bento-val-huge" id="aqi-val">38</div>
+              <div class="aqi-meter-bar">
+                <div id="aqi-meter-fill" class="aqi-meter-fill"></div>
+              </div>
+            </div>
+            <div id="aqi-meta" class="bento-footer">PM2.5: 8.2 µg/m³ • O3: 31 ppb</div>
+          </div>
+
+          <!-- 4. UV Index -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <span>Solar UV Radiation</span>
+              </div>
+            </div>
+            <div class="bento-body">
+              <div class="bento-val-huge" id="uv-val">4.5</div>
+              <div class="uv-bar-container">
+                <div id="uv-bar-fill" class="uv-bar-fill" style="width: 40%;"></div>
+              </div>
+            </div>
+            <div id="uv-category-val" class="bento-footer">Moderate (Wear SPF 30 & hat)</div>
+          </div>
+
+          <!-- 5. Humidity & Dew Point -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+                <span>Relative Humidity</span>
+              </div>
+            </div>
+            <div class="bento-body">
+              <div class="bento-val-huge" id="humidity-val">64%</div>
+            </div>
+            <div id="dewpoint-val" class="bento-footer">Dew point is 11°C right now.</div>
+          </div>
+
+          <!-- 6. Barometric Pressure -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 8 10"/>
+                </svg>
+                <span>Barometric Pressure</span>
+              </div>
+            </div>
+            <div class="bento-body">
+              <div class="bento-val-huge"><span id="pressure-val">1014</span><span>hPa</span></div>
+            </div>
+            <div id="pressure-trend-val" class="bento-footer">Steady synoptic condition.</div>
+          </div>
+
+          <!-- 7. Optical Visibility -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Atmospheric Visibility</span>
+              </div>
+            </div>
+            <div class="bento-body">
+              <div class="bento-val-huge"><span id="visibility-val">10</span><span>km</span></div>
+            </div>
+            <div class="bento-footer">Clear optical horizon; no aerosol fog.</div>
+          </div>
+
+          <!-- 8. Climate Zone Profile -->
+          <div class="glass-card bento-card">
+            <div class="bento-header">
+              <div class="bento-header-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span>Micro-Climate Model</span>
+              </div>
+            </div>
+            <div class="bento-body">
+              <div style="font-size:1.25rem;font-weight:700;">Köppen Climatology</div>
+            </div>
+            <div class="bento-footer">Procedural thermal inertia and solar incidence integration.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7-DAY EXTENDED FORECAST -->
+      <section class="section-container forecast-card-container">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            7-Day Synoptic Outlook
+          </h2>
+          <span style="font-size:0.82rem;color:var(--theme-text-muted);">Markov weather transitions</span>
+        </div>
+
+        <div class="glass-card">
+          <div id="forecast-days-list" class="forecast-days-list">
+            <!-- Dynamically populated daily rows -->
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERACTIVE WEATHER SIMULATOR STUDIO -->
+      <section class="simulator-panel">
+        <div class="simulator-header">
+          <div class="simulator-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;">
+              <polyline points="4 17 10 11 4 5"/>
+              <line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+            <span>Atmospheric Simulator Studio</span>
+            <span class="simulator-badge">LABORATORY MODE</span>
+          </div>
+          <button id="btn-reset-sim" class="btn-trigger-sim">Reset Overrides</button>
+        </div>
+
+        <div class="simulator-grid">
+          <!-- Control 1: Time of Day Scrubber -->
+          <div class="sim-control-group">
+            <div class="sim-control-label">
+              <span>Time of Day Scrubber</span>
+              <span id="sim-time-val" class="sim-control-val">Auto (Real Time)</span>
+            </div>
+            <input type="range" id="sim-time-slider" class="sim-slider" min="-1" max="23" value="-1" step="1">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--theme-text-dim);">
+              <span>Auto</span>
+              <span>Dawn</span>
+              <span>Solar Noon</span>
+              <span>Dusk</span>
+              <span>Midnight</span>
+            </div>
+          </div>
+
+          <!-- Control 2: Temperature Offset -->
+          <div class="sim-control-group">
+            <div class="sim-control-label">
+              <span>Temperature Bias Offset</span>
+              <span id="sim-temp-val" class="sim-control-val">0°C</span>
+            </div>
+            <input type="range" id="sim-temp-slider" class="sim-slider" min="-15" max="15" value="0" step="1">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--theme-text-dim);">
+              <span>-15°C (Arctic Front)</span>
+              <span>0°C (Baseline)</span>
+              <span>+15°C (Heatwave)</span>
+            </div>
+          </div>
+
+          <!-- Control 3: Force Weather Condition -->
+          <div class="sim-control-group">
+            <div class="sim-control-label">
+              <span>Inject Atmospheric Phenomenon</span>
+            </div>
+            <div class="sim-quick-presets">
+              <button class="sim-preset-btn" data-cond="auto">Auto Nature</button>
+              <button class="sim-preset-btn" data-cond="sunny">☀️ High Solar</button>
+              <button class="sim-preset-btn" data-cond="cloudy">☁️ Overcast</button>
+              <button class="sim-preset-btn" data-cond="rainy">🌧️ Rain Showers</button>
+              <button class="sim-preset-btn" data-cond="thunderstorm">⚡ Thunderstorm</button>
+              <button class="sim-preset-btn" data-cond="snowy">❄️ Blizzard Snow</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LANDING PAGE HIGHLIGHTS -->
+      <section class="promo-features-section">
+        <div class="feature-box">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Synthetic Micro-Models</h3>
+          <p class="feature-desc">Diurnal solar inertia, Magnus dew point formulas, and Köppen climatology synthesized entirely client-side without heavy external dependencies.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Real-Time Doppler Synthesis</h3>
+          <p class="feature-desc">Phosphorescent radar sweeps rendering live precipitation echoes, convective storm cells, and laminar wind streamlines at smooth 60 FPS.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Zero Framework Footprint</h3>
+          <p class="feature-desc">Engineered in pristine vanilla HTML5, CSS3 Glassmorphism, and ECMAScript. Ultra-fast load times, responsive on all devices, and battery conscious.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div class="footer-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--theme-accent)" stroke-width="2" style="width:20px;height:20px;">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>
+        </svg>
+        <span>Aether Atmospheric Intelligence</span>
+      </div>
+      <p class="footer-meta">
+        Stochastic meteorological simulations modeled with realistic physical constraints, solar radiation algorithms, and synoptic pressure fronts.
+      </p>
+      <div class="footer-tags">
+        <span class="footer-pill">Client-Side Backend Simulation</span>
+        <span class="footer-pill">Vanilla JavaScript</span>
+        <span class="footer-pill">Modern Glassmorphism CSS</span>
+        <span class="footer-pill">Canvas Doppler Radar</span>
+        <span class="footer-pill">Zero Frameworks</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Severe Weather Toast Notification -->
+  <div id="weather-toast" class="weather-toast" role="alert">
+    <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="toast-content">
+      <h4 id="toast-title">Weather Advisory</h4>
+      <p id="toast-desc">Simulated convective atmospheric shift detected.</p>
+    </div>
+    <button id="toast-close" style="background:none;border:none;color:white;cursor:pointer;padding:4px;margin-left:auto;">✕</button>
+  </div>
+
+  <!-- SCRIPT BUNDLES (NO FRAMEWORKS) -->
+  <script src="js/weather-engine.js"></script>
+  <script src="js/canvas-fx.js"></script>
+  <script src="js/radar-sim.js"></script>
+  <script src="js/app.js"></script>
+</body>
 </html>
